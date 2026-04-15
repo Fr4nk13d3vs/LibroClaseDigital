@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: ms-academico
+            uri: ${ACADEMICO_URL:http://localhost:8081}
+            predicates:
+              - Path=/api/asignaturas/**, /api/cursos/**, /api/alumnos/**, /api/profesores/**, /api/evaluaciones/**
+          - id: ms-asistencia
+            uri: ${ASISTENCIA_URL:http://localhost:8082}
+            predicates:
+              - Path=/api/asistencias/**, /api/anotaciones/**
+          - id: ms-mensajeria
+            uri: ${MENSAJERIA_URL:http://localhost:8083}
+            predicates:
+              - Path=/api/mensajes/**
+
+server:
+  port: 8080
