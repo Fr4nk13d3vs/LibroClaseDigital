@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+
+  mysql-academico:
+    image: mysql:8.0
+    container_name: mysql-academico
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: academico_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-academico-data:/var/lib/mysql
+    networks:
+      - colegio-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-asistencia:
+    image: mysql:8.0
+    container_name: mysql-asistencia
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: asistencia_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-asistencia-data:/var/lib/mysql
+    networks:
+      - colegio-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-mensajeria:
+    image: mysql:8.0
+    container_name: mysql-mensajeria
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mensajeria_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-mensajeria-data:/var/lib/mysql
+    networks:
+      - colegio-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ms-academico:
+    build:
+      context: ./ms-academico/ms-academico
+      dockerfile: Dockerfile
+    container_name: ms-academico
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: mysql-academico
+      DB_PORT: 3306
+      DB_NAME: academico_db
+      DB_USER: root
+      DB_PASS: secret
+    depends_on:
+      mysql-academico:
+        condition: service_healthy
+    networks:
+      - colegio-network
+
+  ms-asistencia:
+    build:
+      context: ./ms-asistencia/ms-asistencia
+      dockerfile: Dockerfile
+    container_name: ms-asistencia
+    ports:
+      - "8082:8082"
+    environment:
+      DB_HOST: mysql-asistencia
+      DB_PORT: 3306
+      DB_NAME: asistencia_db
+      DB_USER: root
+      DB_PASS: secret
+    depends_on:
+      mysql-asistencia:
+        condition: service_healthy
+    networks:
+      - colegio-network
+
+  ms-mensajeria:
+    build:
+      context: ./ms-mensajeria/ms-mensajeria
+      dockerfile: Dockerfile
+    container_name: ms-mensajeria
+    ports:
+      - "8083:8083"
+    environment:
+      DB_HOST: mysql-mensajeria
+      DB_PORT: 3306
+      DB_NAME: mensajeria_db
+      DB_USER: root
+      DB_PASS: secret
+    depends_on:
+      mysql-mensajeria:
+        condition: service_healthy
+    networks:
+      - colegio-network
+
+  api-gateway:
+    build:
+      context: ./api-gateway/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      ACADEMICO_URL: http://ms-academico:8081
+      ASISTENCIA_URL: http://ms-asistencia:8082
+      MENSAJERIA_URL: http://ms-mensajeria:8083
+    depends_on:
+      - ms-academico
+      - ms-asistencia
+      - ms-mensajeria
+    networks:
+      - colegio-network
+
+volumes:
+  mysql-academico-data:
+  mysql-asistencia-data:
+  mysql-mensajeria-data:
+
+networks:
+  colegio-network:
+    driver: bridge
