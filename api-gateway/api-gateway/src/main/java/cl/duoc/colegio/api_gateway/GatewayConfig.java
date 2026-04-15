@@ -1,6 +1,7 @@
 package cl.duoc.colegio.api_gateway;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.gateway.server.mvc.filter.BeforeFilterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +32,9 @@ public class GatewayConfig {
                         .or(RequestPredicates.path("/api/alumnos/**"))
                         .or(RequestPredicates.path("/api/profesores/**"))
                         .or(RequestPredicates.path("/api/evaluaciones/**")),
-                        HandlerFunctions.http(URI.create(academicoUrl)))
+                        HandlerFunctions.http())
+                .before(BeforeFilterFunctions.routeId("ms-academico"))
+                .before(BeforeFilterFunctions.uri(URI.create(academicoUrl)))
                 .build();
     }
 
@@ -40,7 +43,9 @@ public class GatewayConfig {
         return GatewayRouterFunctions.route("ms-asistencia")
                 .route(RequestPredicates.path("/api/asistencias/**")
                         .or(RequestPredicates.path("/api/anotaciones/**")),
-                        HandlerFunctions.http(URI.create(asistenciaUrl)))
+                        HandlerFunctions.http())
+                .before(BeforeFilterFunctions.routeId("ms-asistencia"))
+                .before(BeforeFilterFunctions.uri(URI.create(asistenciaUrl)))
                 .build();
     }
 
@@ -48,7 +53,9 @@ public class GatewayConfig {
     public RouterFunction<ServerResponse> mensajeriaRoutes() {
         return GatewayRouterFunctions.route("ms-mensajeria")
                 .route(RequestPredicates.path("/api/mensajes/**"),
-                        HandlerFunctions.http(URI.create(mensajeriaUrl)))
+                        HandlerFunctions.http())
+                .before(BeforeFilterFunctions.routeId("ms-mensajeria"))
+                .before(BeforeFilterFunctions.uri(URI.create(mensajeriaUrl)))
                 .build();
     }
 }
